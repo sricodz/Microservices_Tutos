@@ -1,0 +1,5 @@
+package com.hotel.user.response;
+
+public class ApiResponse {
+
+}

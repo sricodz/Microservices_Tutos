@@ -1,0 +1,16 @@
+package com.hotel.user.configs;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+
+@Configuration
+public class Cofig {
+
+	@Bean
+	public RestTemplate template() {
+		RestTemplate temp = new RestTemplate();
+		return temp;
+	}
+}

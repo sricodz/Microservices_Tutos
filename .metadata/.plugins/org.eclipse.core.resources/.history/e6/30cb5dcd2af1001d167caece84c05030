@@ -1,0 +1,65 @@
+package com.hotel.user.service;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.hotel.user.entities.Hotel;
+import com.hotel.user.entities.Rating;
+import com.hotel.user.entities.User;
+import com.hotel.user.exceptions.ResourceNotFoundException;
+import com.hotel.user.repository.UserRepository;
+
+@Service
+public class UserServiceImpl implements UserService {
+
+	@Autowired
+	private UserRepository userRepo;
+	
+	@Autowired
+	private RestTemplate restTemplate;
+	
+	 private Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+	
+	@Override
+	public User saveUser(User u) {
+		String randomUserId = UUID.randomUUID().toString();
+		u.setUserId(randomUserId);
+		return userRepo.save(u);
+	}
+
+	@Override
+	public List<User> getAllUser() {
+		return userRepo.findAll();
+	}
+
+	@Override
+	public User getUser(String UserId) {
+		User user= userRepo.findById(UserId).orElseThrow(()->new ResourceNotFoundException("User with given id is not found on server : "+UserId));
+		//fetch ratings of the above user from RATING_SERVICE
+		//http://localhost:8083/ratings/users/{id}
+		Rating[] ratingsOfUser = restTemplate.getForObject("http://localhost:8083/ratings/users/"+user.getUserId(), Rating[].class);
+		logger.info("Ratings : {}",ratingsOfUser);
+		List<Rating> ratings = Arrays.stream(ratingsOfUser).toList();
+		List<Rating> ratingsList = ratings.stream().map(rating->{
+			//api call to HOTEL_SERVICE to get the hotel
+			//http://localhost:8082/hotels/{id}
+			ResponseEntity<Hotel> hotelEntity = restTemplate.getForEntity("http://localhost:8082/hotels/"+rating.getHotelId(), Hotel.class);
+			logger.info("Hotel : {}",hotelEntity.getBody());
+			Hotel hotel=hotelEntity.getBody();
+			rating.setHotel(hotel);
+			return rating;
+		}).collect(Collectors.toList());
+		user.setRatings(ratingsList);
+		return user;
+	}
+
+}

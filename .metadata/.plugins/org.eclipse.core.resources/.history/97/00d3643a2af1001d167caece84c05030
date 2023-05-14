@@ -1,0 +1,5 @@
+package com.hotel.user.feigns;
+
+public interface FeignInterface {
+
+}

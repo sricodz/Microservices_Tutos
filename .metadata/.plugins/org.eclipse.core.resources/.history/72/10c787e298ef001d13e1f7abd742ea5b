@@ -1,0 +1,5 @@
+package com.hotel.user.repository;
+
+public interface UserRepository {
+
+}
